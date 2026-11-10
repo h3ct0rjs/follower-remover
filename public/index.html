@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Instagram Remover</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">IR</span>
+      <div>
+        <h1>Instagram Remover</h1>
+        <p class="muted">Mira cuándo te siguió cada persona y elimina seguidores por fechas</p>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="followers">Seguidores</button>
+    <button class="tab" data-tab="queue">Cola de eliminación <span class="pill" id="queue-pill">0</span></button>
+    <button class="tab" data-tab="import">Importar datos</button>
+    <button class="tab" data-tab="runner">Ejecutor (navegador)</button>
+  </nav>
+
+  <main>
+    <!-- ================= SEGUIDORES ================= -->
+    <section class="panel" data-panel="followers">
+      <div class="card">
+        <h2>Seguidores por mes</h2>
+        <p class="muted">Pulsa un año o un mes para filtrar. Mayúsculas + clic para extender el rango.</p>
+        <div class="months" id="months"></div>
+      </div>
+
+      <div class="card">
+        <form class="filters" id="filters">
+          <label>Desde <input type="date" name="from"></label>
+          <label>Hasta <input type="date" name="to"></label>
+          <label>Buscar <input type="search" name="q" placeholder="usuario"></label>
+          <label>Estado
+            <select name="status">
+              <option value="active">Activos</option>
+              <option value="queued">En cola</option>
+              <option value="removed">Eliminados</option>
+              <option value="all">Todos</option>
+            </select>
+          </label>
+          <label>Orden
+            <select name="sort">
+              <option value="newest">Más recientes</option>
+              <option value="oldest">Más antiguos</option>
+              <option value="username">Usuario A-Z</option>
+            </select>
+          </label>
+          <div class="presets">
+            <button type="button" data-preset="7">Últimos 7 días</button>
+            <button type="button" data-preset="30">Últimos 30 días</button>
+            <button type="button" data-preset="90">Últimos 90 días</button>
+            <button type="button" data-preset="clear">Limpiar</button>
+          </div>
+        </form>
+
+        <div class="bulk">
+          <div>
+            <strong id="result-count">0</strong> resultados ·
+            <strong id="selected-count">0</strong> seleccionados
+          </div>
+          <div class="actions">
+            <button type="button" id="select-page">Seleccionar página</button>
+            <button type="button" id="select-all">Seleccionar todos los filtrados</button>
+            <button type="button" id="clear-selection" class="ghost">Quitar selección</button>
+            <button type="button" id="enqueue" class="danger" disabled>Enviar a la cola de eliminación</button>
+          </div>
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="check-page" title="Seleccionar página"></th>
+              <th>Usuario</th>
+              <th>Te sigue desde</th>
+              <th>Hace</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="followers-body"></tbody>
+        </table>
+        <div class="pager">
+          <button type="button" id="prev">‹ Anterior</button>
+          <span id="page-info"></span>
+          <button type="button" id="next">Siguiente ›</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= COLA ================= -->
+    <section class="panel hidden" data-panel="queue">
+      <div class="card">
+        <div class="row between">
+          <h2>Cola de eliminación</h2>
+          <div class="actions">
+            <select id="queue-filter">
+              <option value="all">Todos</option>
+              <option value="pending">Pendientes</option>
+              <option value="processing">En proceso</option>
+              <option value="failed">Fallidos</option>
+              <option value="done">Hechos</option>
+              <option value="cancelled">Cancelados</option>
+            </select>
+            <button type="button" id="retry-failed">Reintentar fallidos</button>
+            <button type="button" id="clear-finished" class="ghost">Limpiar terminados</button>
+          </div>
+        </div>
+        <p class="muted">La cola la ejecuta el userscript dentro de tu sesión de instagram.com. Mientras corre, esta vista se actualiza sola cada 5 segundos.</p>
+        <div class="queue-counts" id="queue-counts"></div>
+        <div class="runner-box">
+          <div class="row between">
+            <strong>Ejecutor en el navegador: <span id="runner-status" class="muted">sin señal</span></strong>
+            <span class="muted" id="runner-meta"></span>
+          </div>
+          <pre id="runner-log" class="runner-log">Aún no hay registro. Cuando el userscript arranque en instagram.com, sus mensajes aparecerán aquí.</pre>
+        </div>
+        <table class="table">
+          <thead><tr><th>#</th><th>Usuario</th><th>Estado</th><th>Intentos</th><th>Detalle</th><th>Actualizado</th><th></th></tr></thead>
+          <tbody id="queue-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ================= IMPORTAR ================= -->
+    <section class="panel hidden" data-panel="import">
+      <div class="card">
+        <h2>Importar tu exportación de Instagram</h2>
+        <ol class="steps">
+          <li>En Instagram: <em>Configuración → Centro de cuentas → Tu información y permisos → Descargar tu información</em>.</li>
+          <li>Elige <strong>Algunos datos</strong> → <strong>Seguidores y seguidos</strong>, rango <strong>Desde el principio</strong> (si eliges solo el último año, solo verás esos seguidores). Formato <strong>JSON</strong> o <strong>HTML</strong>, ambos valen.</li>
+          <li>Cuando llegue el ZIP, descomprímelo y arrastra aquí los archivos <code>followers_1.json</code> o <code>followers_1.html</code> (y los numerados siguientes, si hay) (están en <code>connections/followers_and_following/</code>).</li>
+        </ol>
+        <div class="dropzone" id="dropzone">
+          <p>Arrastra aquí los <code>followers_*.json</code> / <code>followers_*.html</code> o <button type="button" id="pick-files">elige archivos</button></p>
+          <input type="file" id="file-input" accept=".json,.html,application/json,text/html" multiple hidden>
+        </div>
+        <div id="import-result" class="notice hidden"></div>
+        <p class="muted">También puedes importar desde la terminal: <code>npm run import -- /ruta/a/la/carpeta-exportada</code>. Reimportar una exportación nueva actualiza fechas y detecta quién te volvió a seguir.</p>
+      </div>
+    </section>
+
+    <!-- ================= EJECUTOR ================= -->
+    <section class="panel hidden" data-panel="runner">
+      <div class="card">
+        <h2>Ejecutor en el navegador</h2>
+        <p>Instagram no ofrece una API oficial para quitar seguidores. Esta app no guarda tu contraseña: las eliminaciones las hace un pequeño script que corre <strong>dentro de tu sesión ya iniciada en instagram.com</strong>, con pausas aleatorias y un tope por hora.</p>
+        <ol class="steps">
+          <li>Instala la extensión <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener">Tampermonkey</a> (Chrome, Firefox, Safari, Edge).</li>
+          <li>Instala el script: <a id="userscript-link" href="/userscript/instagram-remover.user.js" class="button">Instalar userscript</a> (Tampermonkey abrirá la confirmación).</li>
+          <li>Abre <a href="https://www.instagram.com/" target="_blank" rel="noopener">instagram.com</a> con tu sesión iniciada. Verás un panel “Instagram Remover” abajo a la derecha.</li>
+          <li>Déjalo primero en <strong>Simulación</strong> para comprobar que resuelve usuarios; luego desactívala y pulsa <strong>Iniciar</strong>.</li>
+        </ol>
+        <div class="notice warn">
+          <strong>Riesgo:</strong> eliminar seguidores de forma automatizada va contra las condiciones de Instagram. Usa pausas largas (90–180 s) y pocos por hora (≤ 25). Si Instagram pide verificación, el script se pausa 30 minutos solo. Esta app no se hace responsable de bloqueos.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

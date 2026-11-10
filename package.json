@@ -1,0 +1,30 @@
+{
+  "name": "instagram-remover",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Ver cuándo te siguió cada seguidor de Instagram y eliminar en lote por fechas (arquitectura hexagonal).",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "seed": "tsx scripts/seed.ts",
+    "import": "tsx src/adapters/inbound/cli/import-export.ts"
+  },
+  "engines": { "node": ">=22.13" },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.0.0"
+  }
+}
